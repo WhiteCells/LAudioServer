@@ -1,0 +1,28 @@
+[2025-09-01 15:44:49.637] [I] [thread 430533] [main.cc:20 main] Ws Server Start ...
+[2025-09-01 15:44:52.561] [I] [thread 430533] [ws_server.cc:51 operator()] type: 1
+[2025-09-01 15:44:52.561] [I] [thread 430533] [ws_server.cc:52 operator()] id: 1000
+[2025-09-01 15:45:12.610] [E] [thread 430533] [ws_session.h:133 on_read_ws] on_read_ws
+[2025-09-01 15:45:17.185] [I] [thread 430533] [ws_server.cc:51 operator()] type: 0
+[2025-09-01 15:45:17.185] [I] [thread 430533] [ws_server.cc:52 operator()] id: 1000
+[2025-09-01 15:45:21.343] [E] [thread 430533] [ws_session.h:133 on_read_ws] on_read_ws
+[2025-09-01 15:47:56.994] [I] [thread 430533] [ws_server.cc:51 operator()] type: 0
+[2025-09-01 15:47:56.994] [I] [thread 430533] [ws_server.cc:52 operator()] id: 1000
+[2025-09-01 15:47:57.714] [E] [thread 430533] [ws_session.h:133 on_read_ws] on_read_ws
+[2025-09-01 15:47:58.918] [I] [thread 430533] [ws_server.cc:51 operator()] type: 0
+[2025-09-01 15:47:58.918] [I] [thread 430533] [ws_server.cc:52 operator()] id: 1000
+[2025-09-01 15:47:59.466] [E] [thread 430533] [ws_session.h:133 on_read_ws] on_read_ws
+[2025-09-01 15:48:00.206] [I] [thread 430533] [ws_server.cc:51 operator()] type: 0
+[2025-09-01 15:48:00.206] [I] [thread 430533] [ws_server.cc:52 operator()] id: 1000
+[2025-09-01 15:48:00.634] [E] [thread 430533] [ws_session.h:133 on_read_ws] on_read_ws
+[2025-09-01 15:48:01.200] [I] [thread 430533] [ws_server.cc:51 operator()] type: 0
+[2025-09-01 15:48:01.200] [I] [thread 430533] [ws_server.cc:52 operator()] id: 1000
+[2025-09-01 15:48:01.570] [E] [thread 430533] [ws_session.h:133 on_read_ws] on_read_ws
+[2025-09-01 15:48:03.770] [I] [thread 430533] [ws_server.cc:51 operator()] type: 0
+[2025-09-01 15:48:03.770] [I] [thread 430533] [ws_server.cc:52 operator()] id: 10001
+[2025-09-01 15:48:04.431] [E] [thread 430533] [ws_session.h:133 on_read_ws] on_read_ws
+[2025-09-01 15:48:04.993] [I] [thread 430533] [ws_server.cc:51 operator()] type: 0
+[2025-09-01 15:48:04.993] [I] [thread 430533] [ws_server.cc:52 operator()] id: 10001
+[2025-09-01 15:48:05.366] [E] [thread 430533] [ws_session.h:133 on_read_ws] on_read_ws
+[2025-09-01 15:48:12.998] [I] [thread 430533] [ws_server.cc:51 operator()] type: 1
+[2025-09-01 15:48:12.998] [I] [thread 430533] [ws_server.cc:52 operator()] id: 10001
+[2025-09-01 15:48:15.138] [E] [thread 430533] [ws_session.h:133 on_read_ws] on_read_ws

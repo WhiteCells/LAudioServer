@@ -1,0 +1,8 @@
+[2025-09-01 15:11:38.350] [I] [thread 377386] [main.cc:20 main] Ws Server Start ...
+[2025-09-01 15:11:39.825] [I] [thread 377386] [ws_server.cc:52 operator()] type: 0, id: 
+[2025-09-01 15:11:39.825] [I] [thread 377386] [ws_session.h:94 on_read_http] id: 1000
+[2025-09-01 15:12:32.195] [E] [thread 377386] [ws_session.h:121 on_read_ws] on_read_ws
+[2025-09-01 15:12:32.656] [I] [thread 377386] [ws_server.cc:52 operator()] type: 0, id: 
+[2025-09-01 15:12:32.656] [I] [thread 377386] [ws_session.h:94 on_read_http] id: 1000
+[2025-09-01 15:12:36.071] [E] [thread 377386] [ws_session.h:121 on_read_ws] on_read_ws
+[2025-09-01 15:12:50.563] [I] [thread 377386] [main.cc:13 operator()] Signal Number: 2
