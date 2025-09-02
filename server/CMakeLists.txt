@@ -16,6 +16,8 @@ set(SRC
     src/singleton.hpp
     src/io_context_pool.h
     src/io_context_pool.cc
+    src/ws_session_mgr.h
+    src/ws_session_mgr.cc
     src/logger.h
     src/logger.cc
 )

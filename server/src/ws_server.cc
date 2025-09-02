@@ -1,5 +1,6 @@
 #include "ws_server.h"
 #include "logger.h"
+#include "ws_session_mgr.h"
 
 WsServer::WsServer(net::io_context &ioc,
                    const std::string &addr,
@@ -47,16 +48,18 @@ void WsServer::do_accept()
             return;
         }
         auto session = std::make_shared<WsSession>(std::move(socket));
-        session->set_on_ready([this, session](WsSessionType type, const std::string &id, WsSession::Sptr ptr) {
+        session->set_on_ready([session](WsSessionType type, const std::string &id, WsSession::Sptr ptr) {
             LOG_INFO("type: {}", (int)type);
             LOG_INFO("id: {}", id);
             switch (type) {
                 case kVoip: {
-                    m_voip_session[id] = session;
+                    WsSessionMgr::join_voip_session(id, session);
+                    // m_voip_session[id] = session;
                     break;
                 }
                 case kRobot: {
-                    m_robot_session[id] = session;
+                    WsSessionMgr::join_robot_session(id, session);
+                    // m_robot_session[id] = session;
                     break;
                 }
                 default: {

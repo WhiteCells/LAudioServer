@@ -127,20 +127,23 @@ private:
                                                       shared_from_this()));
     }
 
-    void on_read_ws(beast::error_code ec, std::size_t bytes)
-    {
-        if (ec == websocket::error::closed) {
-            LOG_ERROR("on_read_ws");
-            return;
-        }
-        if (ec) {
-            return;
-        }
-        std::string msg = beast::buffers_to_string(m_buffer.data());
-        m_buffer.consume(bytes);
-        // msg
-        do_read();
-    }
+    void on_read_ws(beast::error_code ec, std::size_t bytes);
+
+    // void on_read_ws(beast::error_code ec, std::size_t bytes)
+    // {
+    //     if (ec == websocket::error::closed) {
+    //         LOG_ERROR("on_read_ws: {} {}", (int)m_type, m_id);
+    //         WsSessionMgr::leave_robot_session();
+    //         return;
+    //     }
+    //     if (ec) {
+    //         return;
+    //     }
+    //     std::string msg = beast::buffers_to_string(m_buffer.data());
+    //     m_buffer.consume(bytes);
+    //     // msg
+    //     do_read();
+    // }
 
     void do_write()
     {

@@ -6,4 +6,9 @@ enum WsSessionType {
     kRobot,
 };
 
+enum WsSessionStatus {
+    kUsed,
+    kFree,
+};
+
 #endif // _TYPES_H_
