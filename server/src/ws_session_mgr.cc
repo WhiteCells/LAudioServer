@@ -1,47 +1,60 @@
 #include "ws_session_mgr.h"
 #include "logger.h"
 
-std::unordered_map<std::string, WsSession::Sptr> WsSessionMgr::s_voip_session;     // <id, session>
-std::unordered_map<std::string, std::string> WsSessionMgr::s_voip_session_status;  // <id, status>
-std::unordered_map<std::string, WsSession::Sptr> WsSessionMgr::s_robot_session;    // <id, session>
-std::unordered_map<std::string, std::string> WsSessionMgr::s_robot_session_status; // <id, status>
-std::unordered_map<std::string, std::string> WsSessionMgr::s_friend;               // <id, id>
-std::mutex WsSessionMgr::s_mtx;
+// std::unordered_map<WsSessionId, WsSession::Sptr> WsSessionMgr::s_voip_session;         // <id, session>
+// std::unordered_map<WsSessionId, WsSessionStatus> WsSessionMgr::s_voip_session_status;  // <id, status>
+// std::unordered_map<WsSessionId, WsSession::Sptr> WsSessionMgr::s_robot_session;        // <id, session>
+// std::unordered_map<WsSessionId, WsSessionStatus> WsSessionMgr::s_robot_session_status; // <id, status>
+// std::unordered_map<WsSessionId, WsSessionId> WsSessionMgr::s_friend;                   // <id, id>
+// std::mutex WsSessionMgr::s_mtx;
 
-void WsSessionMgr::printSession()
+bool WsSessionMgr::join_session(WsSessionType type, const WsSessionId &id, WsSession::Sptr ptr)
 {
     std::unique_lock<std::mutex> lock(s_mtx);
-    LOG_INFO("> voip session");
-    for (const auto &[k, v] : s_voip_session) {
-        LOG_INFO(" * id: {}, type: {}", k, (int)v->getType());
+    if (s_voip_session.find(id) != s_voip_session.end() || s_robot_session.find(id) != s_robot_session.end()) {
+        return false;
     }
-    LOG_INFO("> robot session");
-    for (const auto &[k, v] : s_robot_session) {
-        LOG_INFO(" * id: {}, type: {}", k, (int)v->getType());
+    bool res;
+    switch (type) {
+        case kVoip: {
+            res = join_voip_session(id, ptr);
+            update_voip_session_status(id, kFree);
+            break;
+        }
+        case kRobot: {
+            res = join_robot_session(id, ptr);
+            update_robot_session_status(id, kFree);
+            break;
+        }
+        default: {
+            res = false;
+            break;
+        }
     }
+    return res;
 }
 
-bool WsSessionMgr::join_voip_session(const std::string &id, WsSession::Sptr ptr)
+bool WsSessionMgr::join_voip_session(const WsSessionId &id, WsSession::Sptr ptr)
 {
-    std::unique_lock<std::mutex> lock(s_mtx);
     if (s_voip_session.find(id) != s_voip_session.end()) {
         return false;
     }
     s_voip_session[id] = ptr;
+    match_robot_session(id);
     return true;
 }
 
-bool WsSessionMgr::join_robot_session(const std::string &id, WsSession::Sptr ptr)
+bool WsSessionMgr::join_robot_session(const WsSessionId &id, WsSession::Sptr ptr)
 {
-    std::unique_lock<std::mutex> lock(s_mtx);
     if (s_robot_session.find(id) != s_robot_session.end()) {
         return false;
     }
     s_robot_session[id] = ptr;
+    match_voip_session(id);
     return true;
 }
 
-bool WsSessionMgr::leave_session(WsSessionType type, const std::string &id)
+bool WsSessionMgr::leave_session(WsSessionType type, const WsSessionId &id)
 {
     std::unique_lock<std::mutex> lock(s_mtx);
     if (s_voip_session.find(id) == s_voip_session.end() && s_robot_session.find(id) == s_robot_session.end()) {
@@ -63,27 +76,38 @@ bool WsSessionMgr::leave_session(WsSessionType type, const std::string &id)
     return true;
 }
 
-bool WsSessionMgr::leave_voip_session(const std::string &id)
+bool WsSessionMgr::leave_voip_session(const WsSessionId &id)
 {
     if (s_voip_session.find(id) == s_voip_session.end()) {
         return false;
     }
     s_voip_session.erase(id);
+    if (s_voip2robot.find(id) != s_voip2robot.end()) {
+        s_voip2robot.erase(id);
+    }
+    if (s_robot2voip.find(id) != s_robot2voip.end()) {
+        s_robot2voip.erase(id);
+    }
     return true;
 }
 
-bool WsSessionMgr::leave_robot_session(const std::string &id)
+bool WsSessionMgr::leave_robot_session(const WsSessionId &id)
 {
     if (s_robot_session.find(id) == s_robot_session.end()) {
         return false;
     }
     s_robot_session.erase(id);
+    if (s_voip2robot.find(id) != s_voip2robot.end()) {
+        s_voip2robot.erase(id);
+    }
+    if (s_robot2voip.find(id) != s_robot2voip.end()) {
+        s_robot2voip.erase(id);
+    }
     return true;
 }
 
-bool WsSessionMgr::update_voip_session_status(const std::string &id, WsSessionStatus status)
+bool WsSessionMgr::update_voip_session_status(const WsSessionId &id, WsSessionStatus status)
 {
-    std::unique_lock<std::mutex> lock(s_mtx);
     if (s_voip_session.find(id) == s_voip_session.end()) {
         return false;
     }
@@ -91,9 +115,8 @@ bool WsSessionMgr::update_voip_session_status(const std::string &id, WsSessionSt
     return true;
 }
 
-bool WsSessionMgr::update_robot_session_status(const std::string &id, WsSessionStatus status)
+bool WsSessionMgr::update_robot_session_status(const WsSessionId &id, WsSessionStatus status)
 {
-    std::unique_lock<std::mutex> lock(s_mtx);
     if (s_robot_session.find(id) == s_robot_session.end()) {
         return false;
     }
@@ -101,33 +124,145 @@ bool WsSessionMgr::update_robot_session_status(const std::string &id, WsSessionS
     return true;
 }
 
-bool WsSessionMgr::relate_session(const std::string &id1, const std::string &id2)
+bool WsSessionMgr::relate_session(const WsSessionId &id1, const WsSessionId &id2)
 {
-    std::unique_lock<std::mutex> lock(s_mtx);
-    if (s_voip_session.find(id1) != s_voip_session.end() || s_robot_session.find(id2) != s_robot_session.end()) {
+    // todo
+    if (s_voip2robot.find(id1) != s_voip2robot.end() || s_voip2robot.find(id2) != s_voip2robot.end()) {
         return false;
     }
+    if (s_robot2voip.find(id1) != s_robot2voip.end() || s_robot2voip.find(id2) != s_robot2voip.end()) {
+        return false;
+    }
+    s_voip2robot[id1] = id2;
+    s_robot2voip[id2] = id1;
     return true;
 }
 
-bool WsSessionMgr::match_session(WsSessionType type, const std::string &id)
+WsSession::Sptr WsSessionMgr::get_friend_session(const WsSessionId &id)
 {
     std::unique_lock<std::mutex> lock(s_mtx);
-    switch (type) {
-        case kVoip:
-            break;
-        case kRobot:
-            break;
+    // if (s_friend.find(id) == s_friend.end()) {
+    //     return nullptr;
+    // }
+    // auto friend_id = s_friend.at(id);
+    WsSession::Sptr friend_ptr;
+    if (s_voip_session.find(id) != s_voip_session.end()) {
+        // friend_ptr = s_voip_session.at(friend_id);
     }
-    return true;
+    if (s_robot_session.find(id) != s_robot_session.end()) {
+        // friend_ptr = s_robot_session.at(friend_id);
+    }
+    return friend_ptr;
 }
 
-bool WsSessionMgr::match_voip_session(const std::string &id)
+bool WsSessionMgr::match_session(WsSessionType own_type, const WsSessionId &id)
 {
-    return true;
+    std::unique_lock<std::mutex> lock(s_mtx);
+    if (s_voip_session.find(id) == s_voip_session.end() && s_robot_session.find(id) == s_robot_session.end()) {
+        return false;
+    }
+    bool res;
+    switch (own_type) {
+        case kVoip: {
+            res = match_robot_session(id);
+            break;
+        }
+        case kRobot: {
+            res = match_voip_session(id);
+            break;
+        }
+        default: {
+            res = false;
+            break;
+        }
+    }
+    return res;
 }
 
-bool WsSessionMgr::match_robot_session(const std::string &id)
+bool WsSessionMgr::match_voip_session(const WsSessionId &robot_id)
 {
-    return true;
+    // robot to match voip session
+    for (const auto &[voip_id, _] : s_voip_session) {
+        if (get_voip_session_status(voip_id) == kFree) {
+            relate_session(voip_id, robot_id);
+            update_voip_session_status(voip_id, kUsed);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool WsSessionMgr::match_robot_session(const WsSessionId &voip_id)
+{
+    // voip to match robot session
+    for (const auto &[robot_id, _] : s_robot_session) {
+        if (get_robot_session_status(robot_id) == kFree) {
+            relate_session(robot_id, voip_id);
+            update_robot_session_status(robot_id, kUsed);
+            return true;
+        }
+    }
+    return false;
+}
+
+WsSessionStatus WsSessionMgr::get_session_status(WsSessionType type, const WsSessionId &id)
+{
+    std::unique_lock<std::mutex> lock(s_mtx);
+    WsSessionStatus status;
+    switch (type) {
+        case kVoip: {
+            status = get_voip_session_status(id);
+            break;
+        }
+        case kRobot: {
+            status = get_robot_session_status(id);
+            break;
+        }
+        default: {
+            status = kNone;
+            break;
+        }
+    }
+    return status;
+}
+
+WsSessionStatus WsSessionMgr::get_voip_session_status(const WsSessionId &id)
+{
+    if (s_voip_session_status.find(id) == s_voip_session_status.end()) {
+        return kNone;
+    }
+    return s_voip_session_status.at(id);
+}
+
+WsSessionStatus WsSessionMgr::get_robot_session_status(const WsSessionId &id)
+{
+    if (s_robot_session_status.find(id) == s_robot_session_status.end()) {
+        return kNone;
+    }
+    return s_robot_session_status.at(id);
+}
+
+void WsSessionMgr::printSession()
+{
+    std::unique_lock<std::mutex> lock(s_mtx);
+    LOG_INFO("> voip session");
+    for (const auto &[k, v] : s_voip_session) {
+        LOG_INFO(" * id: {}, type: {}", k, (int)v->getType());
+    }
+    LOG_INFO("> robot session");
+    for (const auto &[k, v] : s_robot_session) {
+        LOG_INFO(" * id: {}, type: {}", k, (int)v->getType());
+    }
+}
+
+void WsSessionMgr::printFriend()
+{
+    std::unique_lock<std::mutex> lock(s_mtx);
+    LOG_INFO("> friend session");
+    for (const auto &[k, v] : s_robot2voip) {
+        LOG_INFO("{}: {}", k, v);
+    }
+    for (const auto &[k, v] : s_voip2robot) {
+        LOG_INFO("{}: {}", k, v);
+    }
 }

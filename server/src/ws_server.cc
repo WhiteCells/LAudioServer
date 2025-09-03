@@ -34,6 +34,8 @@ WsServer::~WsServer()
 
 void WsServer::send(const std::string &id, const std::string &msg)
 {
+    (void)id;
+    (void)msg;
     std::lock_guard<std::mutex> lock(m_session_mtx);
     // auto sess = m_sessions.at(id);
     // sess->send(msg);
@@ -48,24 +50,13 @@ void WsServer::do_accept()
             return;
         }
         auto session = std::make_shared<WsSession>(std::move(socket));
-        session->set_on_ready([session](WsSessionType type, const std::string &id, WsSession::Sptr ptr) {
+        session->set_on_ready([session](WsSessionType type, const WsSessionId &id) {
             LOG_INFO("type: {}", (int)type);
             LOG_INFO("id: {}", id);
-            switch (type) {
-                case kVoip: {
-                    WsSessionMgr::join_voip_session(id, session);
-                    // m_voip_session[id] = session;
-                    break;
-                }
-                case kRobot: {
-                    WsSessionMgr::join_robot_session(id, session);
-                    // m_robot_session[id] = session;
-                    break;
-                }
-                default: {
-                    break;
-                }
-            }
+            WsSessionMgr::getInstance()->join_session(type, id, session);
+            WsSessionMgr::getInstance()->match_session(type, id);
+            WsSessionMgr::getInstance()->printSession();
+            WsSessionMgr::getInstance()->printFriend();
         });
         session->run();
         do_accept();

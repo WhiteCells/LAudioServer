@@ -27,8 +27,9 @@ add_executable(${PROJECT_NAME} ${SRC})
 target_include_directories(${PROJECT_NAME} PRIVATE)
 
 target_link_directories(${PROJECT_NAME} PRIVATE 
+    3rd/spdlog/include
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    spdlog::spdlog_header_only
+    spdlog
 )

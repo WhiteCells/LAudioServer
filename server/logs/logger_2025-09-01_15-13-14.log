@@ -1,5 +1,0 @@
-[2025-09-01 15:13:14.960] [I] [thread 380082] [main.cc:20 main] Ws Server Start ...
-[2025-09-01 15:13:17.362] [I] [thread 380082] [ws_server.cc:52 operator()] id: 
-[2025-09-01 15:13:17.362] [I] [thread 380082] [ws_server.cc:53 operator()] type: 0, id: 
-[2025-09-01 15:13:17.363] [I] [thread 380082] [ws_session.h:94 on_read_http] id: 1000
-[2025-09-01 15:13:47.259] [I] [thread 380082] [main.cc:13 operator()] Signal Number: 2

@@ -1,46 +1,53 @@
 #ifndef _WS_SESSION_MGR_H_
 #define _WS_SESSION_MGR_H_
 
+#include "singleton.hpp"
 #include "types.h"
 #include "ws_session.h"
-#include <string>
 #include <mutex>
 
-class WsSessionMgr
+class WsSessionMgr :
+    public Singleton<WsSessionMgr>
 {
 public:
-    WsSessionMgr() = default;
-    ~WsSessionMgr() = default;
+    bool join_session(WsSessionType type, const WsSessionId &id, WsSession::Sptr ptr);
 
-    static void printSession();
+    bool leave_session(WsSessionType type, const WsSessionId &id);
 
-    static bool join_voip_session(const std::string &id, WsSession::Sptr ptr);
-    static bool join_robot_session(const std::string &id, WsSession::Sptr ptr);
+    bool update_voip_session_status(const WsSessionId &id, WsSessionStatus status);
+    bool update_robot_session_status(const WsSessionId &id, WsSessionStatus status);
 
-    static bool leave_session(WsSessionType type, const std::string &id);
-    static bool leave_voip_session(const std::string &id);
-    static bool leave_robot_session(const std::string &id);
+    bool relate_session(const WsSessionId &id1, const WsSessionId &id2);
+    WsSession::Sptr get_friend_session(const WsSessionId &id);
 
-    static bool update_voip_session_status(const std::string &id, WsSessionStatus status);
-    static bool update_robot_session_status(const std::string &id, WsSessionStatus status);
+    bool match_session(WsSessionType own_type, const WsSessionId &id);
 
-    static bool relate_session(const std::string &id1, const std::string &id2);
+    WsSessionStatus get_session_status(WsSessionType type, const WsSessionId &id);
 
-    static bool match_session(WsSessionType type, const std::string &id);
-    static bool match_voip_session(const std::string &id);
-    static bool match_robot_session(const std::string &id);
+    void printSession();
+    void printFriend();
 
 private:
-    // voip 类型 session
-    static std::unordered_map<std::string, WsSession::Sptr> s_voip_session;    // <id, session>
-    static std::unordered_map<std::string, std::string> s_voip_session_status; // <id, status>
-    // robot 类型 session
-    static std::unordered_map<std::string, WsSession::Sptr> s_robot_session;    // <id, session>
-    static std::unordered_map<std::string, std::string> s_robot_session_status; // <id, status>
-    // voip 和 robot 配对
-    static std::unordered_map<std::string, std::string> s_friend; // <id, id>
+    bool join_voip_session(const WsSessionId &id, WsSession::Sptr ptr);
+    bool join_robot_session(const WsSessionId &id, WsSession::Sptr ptr);
 
-    static std::mutex s_mtx;
+    bool leave_voip_session(const WsSessionId &id);
+    bool leave_robot_session(const WsSessionId &id);
+
+    WsSessionStatus get_voip_session_status(const WsSessionId &id);
+    WsSessionStatus get_robot_session_status(const WsSessionId &id);
+
+    bool match_voip_session(const WsSessionId &id);
+    bool match_robot_session(const WsSessionId &id);
+
+private:
+    std::unordered_map<WsSessionId, WsSession::Sptr> s_voip_session;         // <id, session>
+    std::unordered_map<WsSessionId, WsSessionStatus> s_voip_session_status;  // <id, status>
+    std::unordered_map<WsSessionId, WsSession::Sptr> s_robot_session;        // <id, session>
+    std::unordered_map<WsSessionId, WsSessionStatus> s_robot_session_status; // <id, status>
+    std::unordered_map<WsSessionId, WsSessionId> s_robot2voip;               // <id, id>
+    std::unordered_map<WsSessionId, WsSessionId> s_voip2robot;               // <id, id>
+    std::mutex s_mtx;
 };
 
 #endif // _WS_SESSION_MGR_H_

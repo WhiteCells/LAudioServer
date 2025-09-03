@@ -20,14 +20,25 @@ class WsSession :
     public std::enable_shared_from_this<WsSession>
 {
 public:
+    // enum Type {
+    //     kVoip,
+    //     kRobot,
+    // };
+    // enum Status {
+    //     kUsed,
+    //     kFree,
+    //     kNone,
+    // };
     using Sptr = std::shared_ptr<WsSession>;
+    // using Type = Type;
+    // using Status = Status;
 
 private:
     websocket::stream<beast::tcp_stream> m_stream;
     beast::flat_buffer m_buffer;
     http::request<http::string_body> m_req;
     std::queue<std::string> m_write_que;
-    std::function<void(WsSessionType, const std::string &, Sptr)> m_on_ready;
+    std::function<void(WsSessionType, const std::string &)> m_on_ready;
     WsSessionType m_type;
     std::string m_id;
 
@@ -52,8 +63,9 @@ public:
     void send(const std::string &msg)
     {
         net::post(m_stream.get_executor(),
-                  [self = shared_from_this(), msg_ = std::move(msg)]() {
+                  [self = shared_from_this(), msg]() {
                       bool write_processing = !self->m_write_que.empty();
+                      self->m_write_que.push(std::move(msg));
                       if (!write_processing) {
                           self->do_write();
                       }
@@ -70,7 +82,7 @@ public:
         return m_id;
     }
 
-    void set_on_ready(std::function<void(WsSessionType, const std::string &, Sptr)> &&func)
+    void set_on_ready(std::function<void(WsSessionType, const WsSessionId &)> &&func)
     {
         m_on_ready = func;
     }
@@ -83,6 +95,7 @@ private:
             return;
         }
 
+        // /<type>?id=
         std::string target = m_req.target();
         if (target.rfind("/voip", 0) == 0) {
             m_type = kVoip;
@@ -115,7 +128,7 @@ private:
             return;
         }
         if (m_on_ready) {
-            m_on_ready(m_type, m_id, shared_from_this());
+            m_on_ready(m_type, m_id);
         }
         do_read();
     }

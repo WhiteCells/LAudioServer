@@ -117,7 +117,7 @@ private:
     }
 
 private:
-    static std::shared_ptr<spdlog::logger> logger;
+    inline static std::shared_ptr<spdlog::logger> logger;
     // static std::once_flag init_flag;
 };
 
@@ -134,5 +134,7 @@ private:
 #define LOG_WARN(...)     Logger::warn(spdlog::source_loc {__FILE__, __LINE__, SPDLOG_FUNCTION}, __VA_ARGS__)
 #define LOG_ERROR(...)    Logger::error(spdlog::source_loc {__FILE__, __LINE__, SPDLOG_FUNCTION}, __VA_ARGS__)
 #define LOG_CRITICAL(...) Logger::critical(spdlog::source_loc {__FILE__, __LINE__, SPDLOG_FUNCTION}, __VA_ARGS__)
+
+// std::shared_ptr<spdlog::logger> Logger::logger = nullptr;
 
 #endif // _LOGGER_H_
