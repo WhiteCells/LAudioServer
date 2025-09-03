@@ -124,33 +124,34 @@ bool WsSessionMgr::update_robot_session_status(const WsSessionId &id, WsSessionS
     return true;
 }
 
-bool WsSessionMgr::relate_session(const WsSessionId &id1, const WsSessionId &id2)
+bool WsSessionMgr::relate_session(const WsSessionId &voip_id, const WsSessionId &robot_id)
 {
-    // todo
-    if (s_voip2robot.find(id1) != s_voip2robot.end() || s_voip2robot.find(id2) != s_voip2robot.end()) {
+    if (s_voip2robot.find(voip_id) != s_voip2robot.end() || s_robot2voip.find(robot_id) != s_robot2voip.end()) {
         return false;
     }
-    if (s_robot2voip.find(id1) != s_robot2voip.end() || s_robot2voip.find(id2) != s_robot2voip.end()) {
-        return false;
-    }
-    s_voip2robot[id1] = id2;
-    s_robot2voip[id2] = id1;
+    s_voip2robot[voip_id] = robot_id;
+    s_robot2voip[robot_id] = voip_id;
     return true;
 }
 
 WsSession::Sptr WsSessionMgr::get_friend_session(const WsSessionId &id)
 {
     std::unique_lock<std::mutex> lock(s_mtx);
-    // if (s_friend.find(id) == s_friend.end()) {
-    //     return nullptr;
-    // }
-    // auto friend_id = s_friend.at(id);
-    WsSession::Sptr friend_ptr;
-    if (s_voip_session.find(id) != s_voip_session.end()) {
-        // friend_ptr = s_voip_session.at(friend_id);
+    if (s_voip2robot.find(id) == s_voip2robot.end() && s_robot2voip.find(id) == s_robot2voip.end()) {
+        return nullptr;
     }
-    if (s_robot_session.find(id) != s_robot_session.end()) {
-        // friend_ptr = s_robot_session.at(friend_id);
+    WsSession::Sptr friend_ptr;
+    if (s_voip2robot.find(id) != s_voip2robot.end()) {
+        auto robot_id = s_voip2robot.at(id);
+        if (s_robot_session.find(robot_id) != s_robot_session.end()) {
+            friend_ptr = s_robot_session.at(robot_id);
+        }
+    }
+    if (s_robot2voip.find(id) != s_robot2voip.end()) {
+        auto voip_id = s_robot2voip.at(id);
+        if (s_voip_session.find(voip_id) != s_voip_session.end()) {
+            friend_ptr = s_voip_session.at(voip_id);
+        }
     }
     return friend_ptr;
 }
@@ -197,7 +198,7 @@ bool WsSessionMgr::match_robot_session(const WsSessionId &voip_id)
     // voip to match robot session
     for (const auto &[robot_id, _] : s_robot_session) {
         if (get_robot_session_status(robot_id) == kFree) {
-            relate_session(robot_id, voip_id);
+            relate_session(voip_id, robot_id);
             update_robot_session_status(robot_id, kUsed);
             return true;
         }
