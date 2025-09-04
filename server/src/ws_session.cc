@@ -7,7 +7,6 @@ void WsSession::on_read_ws(beast::error_code ec, std::size_t bytes)
         LOG_ERROR("on_read_ws: {} {}", (int)m_type, m_id);
         WsSessionMgr::getInstance()->printSession();
         WsSessionMgr::getInstance()->leave_session(m_type, m_id);
-        LOG_INFO("-----------------");
         WsSessionMgr::getInstance()->printSession();
         return;
     }
@@ -15,7 +14,6 @@ void WsSession::on_read_ws(beast::error_code ec, std::size_t bytes)
         LOG_ERROR("on_read_ws: {} {}", (int)m_type, m_id);
         WsSessionMgr::getInstance()->printSession();
         WsSessionMgr::getInstance()->leave_session(m_type, m_id);
-        LOG_INFO("-----------------");
         WsSessionMgr::getInstance()->printSession();
         return;
     }
@@ -23,7 +21,7 @@ void WsSession::on_read_ws(beast::error_code ec, std::size_t bytes)
     m_buffer.consume(bytes);
     // process msg
     LOG_INFO("recv msg: {}", msg);
-    auto friend_session_ptr = WsSessionMgr::getInstance()->get_friend_session(m_id);
+    auto friend_session_ptr = WsSessionMgr::getInstance()->get_friend_session(m_type, m_id);
     if (friend_session_ptr) {
         friend_session_ptr->send(msg);
     }
